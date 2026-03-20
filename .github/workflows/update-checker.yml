@@ -1,0 +1,63 @@
+name: Update Checker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 0 * * *
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Get Kernel Version
+      id: getKernel
+      run: |
+        git clone --depth 1 https://android.googlesource.com/kernel/common -b android12-5.10-lts ${GITHUB_WORKSPACE}/common
+        cd ${GITHUB_WORKSPACE}/common
+        VERSION=$(grep "^VERSION = .*$" Makefile | awk '{print $3}')
+        PATCHLEVEL=$(grep "^PATCHLEVEL = .*$" Makefile | awk '{print $3}')
+        SUBLEVEL=$(grep "^SUBLEVEL = .*$" Makefile | awk '{print $3}')
+        Kernel_VER="android12-${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
+        Kernel_HEAD=$(git rev-parse HEAD)
+        echo "Kernel_VER=${Kernel_VER}" >> "$GITHUB_OUTPUT"
+        echo "Kernel_HEAD=${Kernel_HEAD}" >> "$GITHUB_OUTPUT"
+
+    - name: Get Cache Version
+      id: getcache
+      uses: actions/cache@v4
+      with:
+        path: commitHash
+        key: HEAD-${{ github.sha }}
+        restore-keys: HEAD-
+
+    - name: Save New Version
+      id: save
+      run: |
+        if [ -f ${GITHUB_WORKSPACE}/commitHash ];then
+          cacheVer=$(cat ${GITHUB_WORKSPACE}/commitHash)
+        fi
+        echo -e "CacheVer:\n${cacheVer}"
+        getVer=${{ steps.getKernel.outputs.Kernel_VER }}-${{ steps.getKernel.outputs.Kernel_HEAD }}
+        echo -e "GetVer:\n${getVer}"
+        if [ "${cacheVer}" != "${getVer}" ];then
+          echo "build=true" >> "$GITHUB_OUTPUT"
+          echo ${getVer} | tee ${GITHUB_WORKSPACE}/commitHash
+          touch ${GITHUB_WORKSPACE}/commitHash
+        else
+          echo "build=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Auto compile
+      if: steps.save.outputs.build == 'true'
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        event-type: Auto compile
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        retain_days: 0
+        keep_minimum_runs: 1
