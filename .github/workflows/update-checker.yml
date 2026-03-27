@@ -44,7 +44,7 @@ jobs:
         echo -e "GetVer:\n${getVer}"
         if [ "${cacheVer}" != "${getVer}" ];then
           echo "build=true" >> "$GITHUB_OUTPUT"
-          echo ${getVer} | tee ${GITHUB_WORKSPACE}/commitHash
+          echo ${getVer} > ${GITHUB_WORKSPACE}/commitHash
           touch ${GITHUB_WORKSPACE}/commitHash
         else
           echo "build=false" >> "$GITHUB_OUTPUT"
