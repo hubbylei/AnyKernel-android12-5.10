@@ -28,7 +28,7 @@ jobs:
     - name: Get Version
       id: getVersion
       run: |
-        kernel_h=$(curl -skL https://api.github.com/repos/hubbylei/AnyKernel-android12-5.10/releases/latest | jq -r .body | grep "Latest Kernel:" | awk '{print $4}' | sed 's,.*(\(.*\)),\1,')
+        kernel_h=$(curl -skL https://api.github.com/repos/hubbylei/AnyKernel-android12-5.10/releases/latest | jq -r .body | grep "Latest Kernel:" | awk '{print $4}' | sed 's,.*(\(.*\)).*,\1,')
         echo "Kernel_HEAD=${kernel_h}" >> "$GITHUB_OUTPUT"
 
     - name: Compare Version Version
