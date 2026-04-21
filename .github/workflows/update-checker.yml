@@ -25,33 +25,23 @@ jobs:
         echo "Kernel_VER=${Kernel_VER}" >> "$GITHUB_OUTPUT"
         echo "Kernel_HEAD=${Kernel_HEAD}" >> "$GITHUB_OUTPUT"
 
-    - name: Get Cache Version
-      id: getcache
-      uses: actions/cache@v4
-      with:
-        path: commitHash
-        key: HEAD-${{ github.sha }}
-        restore-keys: HEAD-
-
-    - name: Save New Version
-      id: save
+    - name: Get Version
+      id: getVersion
       run: |
-        if [ -f ${GITHUB_WORKSPACE}/commitHash ];then
-          cacheVer=$(cat ${GITHUB_WORKSPACE}/commitHash)
-        fi
-        echo -e "CacheVer:\n${cacheVer}"
-        getVer=${{ steps.getKernel.outputs.Kernel_VER }}-${{ steps.getKernel.outputs.Kernel_HEAD }}
-        echo -e "GetVer:\n${getVer}"
-        if [ "${cacheVer}" != "${getVer}" ];then
-          echo "build=true" >> "$GITHUB_OUTPUT"
-          echo ${getVer} > ${GITHUB_WORKSPACE}/commitHash
-          touch ${GITHUB_WORKSPACE}/commitHash
-        else
+        kernel_h=$(curl -skL https://api.github.com/repos/hubbylei/AnyKernel-android12-5.10/releases/latest | jq -r .body | grep "Latest Kernel:" | awk '{print $4}' | sed -e 's,.*-\(.*\),\1,')
+        echo "Kernel_HEAD=${kernel_h}" >> "$GITHUB_OUTPUT"
+
+    - name: Compare Version Version
+      id: compare
+      run: |
+        if [ "${{ steps.getVersion.outputs.Kernel_HEAD }}" = "${{ steps.getKernel.outputs.Kernel_HEAD }}" ];then
           echo "build=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "build=true" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Auto compile
-      if: steps.save.outputs.build == 'true'
+      if: steps.compare.outputs.build == 'true'
       uses: peter-evans/repository-dispatch@v3
       with:
         event-type: Auto compile
