@@ -76,11 +76,11 @@ jobs:
       if: steps.version.outputs.status == 'success' && !cancelled()
       run: |
         tag=Kernel-${{ steps.version.outputs.kernel_ver }}-$(date "+%Y%m%d%H%M")
-        echo "## :mega:Update content" > release.txt
-        echo "![](https://img.shields.io/github/downloads/${{ github.repository }}/${tag}/total?style=flat-square)" >> release.txt
+        echo "## :mega:Update content" > ${GITHUB_WORKSPACE}/release.txt
+        echo "![](https://img.shields.io/github/downloads/${{ github.repository }}/${tag}/total?style=flat-square)" >> ${GITHUB_WORKSPACE}/release.txt
         echo "### Info" >> ${GITHUB_WORKSPACE}/release.txt
-        echo ":minidisc: Latest Kernel: ${{ steps.version.outputs.kernel_ver }}(${{ steps.source.outputs.Kernel_HEAD }})" >> release.txt
-        touch release.txt
+        echo ":minidisc: Latest Kernel: ${{ steps.version.outputs.kernel_ver }}(${{ steps.source.outputs.Kernel_HEAD }})" >> ${GITHUB_WORKSPACE}/release.txt
+        touch ${GITHUB_WORKSPACE}/release.txt
         echo "release_tag=${tag}" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
 
